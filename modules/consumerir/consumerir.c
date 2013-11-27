@@ -17,6 +17,8 @@
 
 #include <errno.h>
 #include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
 #include <cutils/log.h>
 #include <hardware/hardware.h>
 #include <hardware/consumerir.h>
@@ -32,18 +34,31 @@ static const consumerir_freq_range_t consumerir_freqs[] = {
     {.min = 56000, .max = 56000},
 };
 
+int fd = 0;
 static int consumerir_transmit(struct consumerir_device *dev,
    int carrier_freq, int pattern[], int pattern_len)
 {
     int total_time = 0;
-    long i;
+    int strlen;
+    int i;
+    int len;
+    char buffer[1024];
 
-    for (i = 0; i < pattern_len; i++)
-        total_time += pattern[i];
 
-    /* simulate the time spent transmitting by sleeping */
-    ALOGD("transmit for %d uS at %d Hz", total_time, carrier_freq);
-    usleep(total_time);
+    memset(buffer, 0, 1024);
+
+	/* write the header */
+	strlen = sprintf(buffer, "%d,", carrier_freq);
+
+    /* write out the timing pattern */
+    for(i = 0; i < pattern_len; i++) {
+        len = sprintf(buffer + strlen, "%d,", pattern[i]);
+        strlen += len;
+    }
+
+    buffer[strlen - 1] = 0;
+
+	write(fd, buffer, strlen - 1);
 
     return 0;
 }
@@ -66,6 +81,7 @@ static int consumerir_get_carrier_freqs(struct consumerir_device *dev,
 static int consumerir_close(hw_device_t *dev)
 {
     free(dev);
+    close(fd);
     return 0;
 }
 
@@ -96,6 +112,7 @@ static int consumerir_open(const hw_module_t* module, const char* name,
     dev->get_carrier_freqs = consumerir_get_carrier_freqs;
 
     *device = (hw_device_t*) dev;
+    fd = open("/sys/class/sec/sec_ir/ir_send", O_RDWR);
     return 0;
 }
 
@@ -109,8 +126,8 @@ consumerir_module_t HAL_MODULE_INFO_SYM = {
         .module_api_version = CONSUMERIR_MODULE_API_VERSION_1_0,
         .hal_api_version    = HARDWARE_HAL_API_VERSION,
         .id                 = CONSUMERIR_HARDWARE_MODULE_ID,
-        .name               = "Demo IR HAL",
-        .author             = "The Android Open Source Project",
+        .name               = "Consumer IR Module",
+        .author             = "The CyanogenMod Project",
         .methods            = &consumerir_module_methods,
     },
 };
