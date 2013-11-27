@@ -38,12 +38,9 @@ int fd = 0;
 static int consumerir_transmit(struct consumerir_device *dev,
    int carrier_freq, int pattern[], int pattern_len)
 {
-    int total_time = 0;
     int strlen;
     int i;
-    int len;
     char buffer[1024];
-
 
     memset(buffer, 0, 1024);
 
@@ -51,9 +48,9 @@ static int consumerir_transmit(struct consumerir_device *dev,
 	strlen = sprintf(buffer, "%d,", carrier_freq);
 
     /* write out the timing pattern */
-    for(i = 0; i < pattern_len; i++) {
-        len = sprintf(buffer + strlen, "%d,", pattern[i]);
-        strlen += len;
+    for(i = 0; i < pattern_len; i++)
+    {
+        strlen += sprintf(buffer + strlen, "%d,", pattern[i]);
     }
 
     buffer[strlen - 1] = 0;
