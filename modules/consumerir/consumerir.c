@@ -44,18 +44,18 @@ static int consumerir_transmit(struct consumerir_device *dev,
 
     memset(buffer, 0, 1024);
 
-	/* write the header */
-	strlen = sprintf(buffer, "%d,", carrier_freq);
+    /* write the header */
+    strlen = sprintf(buffer, "%d,", carrier_freq);
 
     /* write out the timing pattern */
-    for(i = 0; i < pattern_len; i++)
+    for (i = 0; i < pattern_len; i++)
     {
         strlen += sprintf(buffer + strlen, "%d,", pattern[i]);
     }
 
     buffer[strlen - 1] = 0;
 
-	write(fd, buffer, strlen - 1);
+    write(fd, buffer, strlen - 1);
 
     return 0;
 }
